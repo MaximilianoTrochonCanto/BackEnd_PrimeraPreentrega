@@ -1,99 +1,74 @@
-const Server = require('socket.io')
-const express = require("express")
-const productsRoutes = require("./routes/productsRoutes")
-const cartsRoutes = require("./routes/cartsRoutes")
-const viewsRoutes = require("./routes/views.routes")
-const handlebars = require("express-handlebars")
-const path = require("path")
-const app = express()
-const PORT = 8080
-const mongoHOST = "localhost"
-const mongoPORT = 27017
-const mongoDB = "ecommerce"
-const fs = require("fs/promises")
-const mongoose = require("mongoose")
-const ProductManager = require("./dao/fileManagers/productManager")
-const messagesModel = require('./dao/model/messages.models')
-const productsModel = require('./model/products.models')
-const { Console } = require('console')
+import express from 'express';
+import { createServer } from 'http';
+import { Server as SocketServer } from 'socket.io';
+import handlebars from 'express-handlebars';
+import path from 'path';
+import productsRoutes from './routes/productsRoutes.js';
+import cartsRoutes from './routes/cartsRoutes.js';
+import viewsRoutes from './routes/views.routes.js';
+import ProductManager from './dao/fileManagers/productManager.js';
 
-const pManager = new ProductManager(path.join(__dirname, "./products.json"))
+const __dirname = path.resolve();
+const app = express();
+const PORT = 8080;
 
-const httpServer = app.listen(PORT,()=>console.log(`Up N'running ${PORT}`))
+const pManager = new ProductManager();
 
-const io = new Server.Server(httpServer)
-const API_PREFIX = "api"
+const httpServer = createServer(app);
+const io = new SocketServer(httpServer);
+const API_PREFIX = 'api';
 
+httpServer.listen(PORT, () => console.log(`Up N'running ${PORT}`));
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-app.get("/",async(req,res)=>{
-    const products = await productsModel.find()
-    console.log(products)
-    res.render("home",{ products })
-})
+// Handlebars engine setup
+app.engine('handlebars', handlebars.engine());
+app.set('views', path.join(__dirname, './src/views'));
+app.set('view engine', 'handlebars');
 
-app.use(express.json())
-app.use(express.urlencoded({extended:true}))
-console.log()
-app.use(express.static(__dirname+"/public"))
-app.engine("handlebars",handlebars.engine())
-app.set("views",path.join(__dirname,"/views"))
-app.set("view engine","handlebars")
+// Routes
+app.use(`/${API_PREFIX}/products`, (req, res, next) => {
+    req.io = io; // Inject io/socket into req object
+    next();
+}, productsRoutes);
+app.use(`/${API_PREFIX}/carts`, cartsRoutes);
+app.use(`/`, viewsRoutes);
 
+io.on('connection', async (socket) => {
+    console.log('New client connected', socket.id);
 
-app.use(`/${API_PREFIX}/products`,productsRoutes)
-app.use(`/${API_PREFIX}/carts`,cartsRoutes)
-app.use(`/`,viewsRoutes)
+    // Emit initial products to connected client
+    const products = await pManager.getProducts();
+    socket.emit('prod-logs', products);
 
-const connection = mongoose.connect(
-    `mongodb+srv://MaxiTrochon:Solynico81**@cluster0.cdecepf.mongodb.net/ecommerce
-`
-).then((con) => {
-    console.log("Connected to mongo")
-}).catch((err) => {
-    console.log(err)
-})
+    // Handle new product creation
+    socket.on('new-prod', async (data) => {
+        await pManager.createProduct(data);
+        io.emit('prod-logs', await pManager.getProducts());
+    });
 
+    // Handle product deletion
+    socket.on('borrar-prod', async (data) => {
+        await pManager.deleteProduct(data);
+        io.emit('prod-logs', await pManager.getProducts());
+    });
 
-io.on("connection", async(socket) => {
-     let prods = await productsModel.find()
-//    socket.emit("prod-logs",{prods})
-    console.log("New client connected", socket.id)
-    socket.on("new-prod",async(data) =>{   
-       
-        const lastId = prods[prods.length - 1].id
-        await pManager.createProduct({
-            id:(Number(lastId)+ 1).toString(),
-            status:true,
-            ...data
-          })  
-          await productsModel.insertMany(data)
+    // Handle product update
+    socket.on('update-prod', async (data) => {
+        await pManager.updateProduct(data.id, data);
+        io.emit('prod-logs', await pManager.getProducts());
+    });
+});
 
-      
-    //   pr.push(p)
-      io.emit("prod-logs",await productsModel.find())
-      // PORQUE NO ME DEJA SEGUIR AGREGANDO Y SOBREESCRIBE???  
-      
-          
-      
-      
-    })
+// Route to render real-time products view
+app.get('/real-time-products', async (req, res) => {
+    const products = await pManager.getProducts();
+    res.render('realTimeProducts', { products });
+});
 
+export default io;
 
-    socket.on("newMessage",async(data) => {
-        if(data !== undefined)
-        await messagesModel.insertMany(data)        
-        io.emit("msg",await messagesModel.find())
-    })
-
-    socket.on("borrar-prod",async(data) => {    
-       await productsModel.deleteOne({_id:data})
-       
-        io.emit("prod-logs",await productsModel.find())
-        
-    })
-
-})
-
-
-module.exports = io;

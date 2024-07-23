@@ -1,53 +1,48 @@
-const { Router } = require("express")
-const path = require("path");
+import { Router } from 'express';
+import CartManager from '../dao/fileManagers/cartManager.js';
 
-const CartManager = require("../dao/fileManagers/cartManager")
-const { uploader } = require("../utils");
-const cartsModel = require("../dao/model/carts.models");
-const productsModel = require("../model/products.models");
-const router = Router()
+const router = Router();
+const cartManager = new CartManager();
 
-const manager = new CartManager(path.join(__dirname, "../carts.json"))
+router.get('/', async (req, res) => {
+  try {
+    const carts = await cartManager.readCartsFromFile();
+    res.json({ carts });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      message: 'Hubo un error al procesar la solicitud',
+    });
+  }
+});
 
+router.get('/:cid', async (req, res) => {
+  try {
+    const cart = await cartManager.getCart(req.params.cid);
+    res.json(cart.products);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      message: 'Hubo un error al procesar la solicitud',
+    });
+  }
+});
 
-router.get(`/:cid`, async (req, res) => {
-    try {
-        const cartProds = await cartsModel.findOne({_id:req.params.cid}).distinct("products")
-        
-        return res.json({
-            ok: true,
-            products: cartProds,
-        });
-    } catch (error) {
-        return res.json({
-            ok: false,
-            message: error,
-        });
-    }
-})
+router.post('/:cid/product/:pid', async (req, res) => {
+  try {
+    const { cid, pid } = req.params;
+    const message = await cartManager.addProduct(cid, pid);
+    res.json({ message });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      message: 'Hubo un error al procesar la solicitud',
+    });
+  }
+});
 
-router.post(`/:cid/product/:pid`, async (req, res) => {
-    try {                
-        if(await productsModel.findOne({_id:req.params.pid}) !== undefined && await cartsModel.findOne({_id:req.params.cid})!== undefined){        
-        const prods = await cartsModel.findOne({_id:req.params.cid}).distinct("products")        
-        prods.push(req.params.pid)        
-        await cartsModel.updateOne({_id:req.params.cid},{$set:{products:new Array(prods)}})
-       // await manager.addProduct(req.params.cid, req.params.pid)
-        res.json({
-            ok: true,
-            message:"Producto agregado al carrito " + req.params.cid
-        })
-        }
-         
-    } catch (error) {
-        res.json({
-            ok: false,
-            message: error.message
-        })
-    }
-})
+router.post('/', async (req, res) => {
+  // Implement your POST logic here as needed, using cartManager methods
+});
 
-
-
-
-module.exports = router
+export default router;

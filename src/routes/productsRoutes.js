@@ -1,194 +1,131 @@
-const { Router } = require("express")
-const path = require("path");
-const ProductManager = require("../dao/fileManagers/productManager")
-const productos = require("../products.json");
-const handlebars = require("express-handlebars")
-const { uploader } = require("../utils");
-const { title } = require("process");
-const router = Router()
-const express = require("express")
-const app = express()
-const io = require("../app");
-const productsModel = require("../model/products.models");
-const prodsData = require("../data/products");
+import { Router } from 'express';
+import { uploader } from '../utils.js';
+import ProductManager from '../dao/fileManagers/productManager.js';
 
+const router = Router();
+const productManager = new ProductManager();
 
-const manager = new ProductManager(path.join(__dirname, "../products.json"))
-
-app.engine("handlebars",handlebars.engine())
-app.set("views",path.join(__dirname,"/views"))
-app.set("view engine","handlebars")
-
-router.get(`/insertion`,async(req,res) =>{
-    try{
-        let result = await productsModel.insertMany(prodsData)
-        return res.json({
-            message:"Massive insert successful",
-            products:result
-        }
-        )
-    }catch(err){
-        console.log(err)
+router.get('/', async (req, res) => {
+  try {
+    const products = await productManager.getProducts();
+    let limit = parseInt(req.query.limit);
+    if (isNaN(limit) || limit <= 0) {
+      limit = products.length;
     }
-})
+    res.status(200).json(products.slice(0, limit));
+  } catch (error) {
+    console.error('Error reading products:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-    let result;
-        router.get(`/`, async (req, res) => {
-            try{                
-                (req.query.limit>0)?result = await productsModel.find().limit(req.query.limit):result = await productsModel.find()             
-
-                return res.json({
-                    ok: true,
-                    products: result
-                });
-            }catch(error){
-                return res.json({
-                    ok: false,
-                    products: error.message
-                });
-            }
-        })
-
-
-
-     
-    router.get(`/:productId`, async(req, res) => {
-       try{
-           const productId = req.params.productId;                   
-                   const producto = await productsModel.find({
-                    _id:productId
-                   })
-                   if (!producto) {
-                       return res.status(400).json({
-                           ok: true,
-                           message: `No existe el producto con el id ${productId}`,
-                           queryParams: req.query
-                        })
-                    }
-                                                                        
-                    return res.json({
-                        ok: true,
-                        product: producto
-                    });
-                }catch(error){
-                    return res.json({
-                        ok: false,
-                        product: error.message
-                    });
-                }
-
-                
-            })
-            
-            
-            
-            
-
-
-            
-            router.post(`/`,uploader.single("thumbnails"),async(req, res) => {
-            const prods = await manager.getProducts()
-            const file = req.file;
-            console.log(req.file)
-            
-            const product = req.body;
-            productsModel.insertMany(req.body)
-            res.json({
-                ok:true,
-                message:"Producto agregado exitosamente"
-            })
-
-            // const lastId = prods.products[prods.products.length - 1].id
-            // console.log(lastId)
-            // let newProduct;
-            // if(file){
-            //      newProduct = {
-            //         id: (Number(lastId) + 1).toString(),
-            //         thumbnails: `http://localhost:8080/public/uploads/${file.filename}`,
-            //         status: true,
-            //         ...product
-            //     }
-            // }else{
-            //      newProduct = {
-            //         id: (Number(lastId) + 1).toString(),                    
-            //         status: true,
-            //         ...product
-            //     }
-            // }
-            // if (newProduct.title != "" || newProduct.description != "" || newProduct.code != "" || newProduct.price != "") {
-            //     //await manager.createProduct(newProduct)
-            // }
-        })
-
-
-
-
-
-router.put(`/:productId`, async(req, res) => {
-    try{
-    const productId = req.params.productId;    
-    const productouevo = req.body;   
-    
-    
-    if(productouevo.title !== undefined)
-   await productsModel.updateOne({_id:productId}, {$set:{title:productouevo.title}})
-    
-    if(productouevo.description !== undefined)
-    await productsModel.updateOne({_id:productId}, {$set:{description:productouevo.description}})
-
-    if(productouevo.code !== undefined)
-    await productsModel.updateOne({_id:productId}, {$set:{code:productouevo.code}})
-
-    if(productouevo.price !== undefined)
-    await productsModel.updateOne({_id:productId}, {$set:{price:productouevo.price}})
-
-    if(productouevo.status !== undefined)
-    await productsModel.updateOne({_id:productId}, {$set:{status:productouevo.status}})
-
-    if(productouevo.category !== undefined)
-    await productsModel.updateOne({_id:productId}, {$set:{category:productouevo.category}})
-
-    if(productouevo.thumbnails !== undefined)
-    await productsModel.updateOne({_id:productId}, {$set:{thumbnails:productouevo.thumbnails}})
-    
-   // await manager.updateProduct(productId,newProduct)
-    res.json({
-        ok:true,
-        message:"El producto fue actualizado",
-        producto: await productsModel.find({_id:productId})
-    })
-    }catch(error){
-        res.json({
-            ok:false,
-            message:error.message,            
-        })  
+router.get('/:pId', async (req, res) => {
+  try {
+    const product = await productManager.getProductById(req.params.pId);
+    if (!product) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
     }
-})
+    res.json(product);
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
+router.post('/', uploader.single('thumbnail'), async (req, res) => {
+  try {
+    const { title, description, price, thumbnail, stock, code, category } = req.body;
+    if (!title || !description || !price || !stock || !code) {
+      return res.status(400).json({
+        message: "Los campos 'titulo', 'descripcion', 'precio', 'stock' y 'codigo' son obligatorios.",
+      });
+    }
+    const parsedPrice = parseFloat(price);
+    const parsedStock = parseInt(stock);
+    if (isNaN(parsedPrice) || parsedPrice <= 0 || isNaN(parsedStock) || parsedStock <= 0) {
+      return res.status(400).json({
+        message: "Los campos 'precio' y 'stock' deben ser números mayores que cero.",
+      });
+    }
 
+    const newProduct = { title, description, price: parsedPrice, thumbnail, stock: parsedStock, code, category };
+    console.log(newProduct);
+    await productManager.createProduct(newProduct);
 
+    // Emit to WebSocket clients
+    req.io.emit('new-prod', newProduct);
 
+    res.status(201).json({
+      ...newProduct,
+      message: 'Producto agregado',
+    });
 
-        router.delete(`/:productId`, async(req, res) => {            
-            try{
-                await productsModel.deleteOne({_id:req.params.productId})
-               // await manager.deleteProduct(req.params.productId); 
-                
-                res.json({
-                    ok:true,
-                    message:"El producto fue Borrado"
-                })
-            }catch(error){
-                res.json({
-                    ok:false,
-                    message:error.message
-                })
-            }
-        })
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
+router.put('/:pId', async (req, res) => {
+  try {
+    const { title, description, price, thumbnail, stock, code, category } = req.body;
+    const productId = req.params.pId;
 
+    const existingProduct = await productManager.getProductById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
 
+    const updatedProduct = {
+      id: productId,
+      title,
+      description,
+      price,
+      thumbnail,
+      stock,
+      code,
+      category,
+    };
 
+    await productManager.updateProduct(productId, updatedProduct);
 
+    // Emit to WebSocket clients
+    req.io.emit('update-prod', updatedProduct);
 
-module.exports = router
+    res.status(200).json({
+      message: 'Producto actualizado correctamente.',
+      product: updatedProduct,
+    });
+
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+router.delete('/:pId', async (req, res) => {
+  try {
+    const productId = req.params.pId;
+
+    const existingProduct = await productManager.getProductById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    const deletedProduct = await productManager.deleteProduct(productId);
+
+    // Emit to WebSocket clients
+    req.io.emit('borrar-prod', productId);
+
+    res.status(200).json({
+      message: 'Producto borrado.',
+      deletedProduct,
+    });
+
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+export default router;

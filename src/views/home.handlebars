@@ -1,9 +1,60 @@
-<h1>Lista de productos</h1>
-
-<div>
-{{#each products}} 
-<pre>{{this}}</pre>
-
-<hr>
-{{/each}} 
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .product-list {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .product-item {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .product-item:last-child {
+      border-bottom: none;
+    }
+    .product-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin: 0;
+    }
+    .product-description {
+      margin: 5px 0;
+    }
+    .product-price {
+      font-size: 1em;
+      color: #28a745;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lista de productos</h1>
+  <div class="product-list">
+    {{#each products}}
+    <div class="product-item">
+      <p class="product-title">{{title}}</p>
+      <p class="product-description">{{description}}</p>
+      <p class="product-price">${{price}}</p>
+    </div>
+    {{/each}}
+  </div>
+</body>
+</html>

@@ -1,39 +1,105 @@
-<h1>Alta de producto:</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Products</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+      }
+      .product {
+          border: 1px solid #ddd;
+          padding: 10px;
+          margin-bottom: 10px;
+      }
+      .product h2 {
+          margin: 0 0 10px;
+      }
+  </style>
+</head>
+<body>
+  <h1>Real-Time Products List</h1>
+  <div id="products-list">
+      {{#each products}}
+      <div class="product" data-id="{{id}}">
+          <h2>{{title}}</h2>
+          <p>{{description}}</p>
+          <p><strong>Price:</strong> ${{price}}</p>
+          <p><strong>Stock:</strong> {{stock}}</p>
+          <p><strong>Code:</strong> {{code}}</p>
+          <p><strong>Category:</strong> {{category}}</p>
+      </div>
+      {{/each}}
+  </div>
 
-<form id="formProd"  enctype="multipart/form-data">
-    <label for="txtTitle">Titulo:</label>
-    <input type="text" id="txtTitle" name="title"><br>
-    <label for="txtPrecio">Precio:</label>
-    <input type="number" id="txtPrecio" name="price"><br>
-    <label for="txtStock">Stock:</label>
-    <input type="number" id="txtStock" name="stock"><br>
-    <label for="txtDescription">Descripcion:</label>
-    <input type="text" id="txtDescription" name="description"><br>
-    <label for="txtCategory">Categoria:</label>
-    <input type="text" id="txtCategory" name="category"><br>
-    <label for="txtCode">Codigo:</label>
-    <input type="text" id="txtCode" name="code"><br>
-    <label for="txtThumbnail">Imagen:</label>
-    <input type="file" id="txtThumbnail" name="thumbnails"><br>
-    <input type="submit" value="Ingresar" id="btnIngresarRealtime">
-   </form> 
-    <input type="text" id="txtProductoBorrar" placeholder="id de producto">
-    <input type="button" value="Borrar" id="btnBorrar">
-   <p id="listaProductos"></p>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+      const socket = io();
 
-   {{!-- <section>
-    {{#each products}}
-    <div>
-    <h2>Titulo: {{title}}</h2>
-    <h2>Descripcion: {{description}}</h2>
-    <h2>Categoria: {{category}}</h2>
-    <h2>Codigo: {{code}}</h2>
-    <h2>Precio: {{price}}</h2>
-    <h2>Stock: {{stock}}</h2>            
-    </div>
-    <hr>
-    {{/each}}
-   </section>  --}}
+      const renderProducts = (products) => {
+          const productsList = document.getElementById('products-list');
+          productsList.innerHTML = '';
+          products.forEach(product => {
+              const productDiv = document.createElement('div');
+              productDiv.classList.add('product');
+              productDiv.dataset.id = product.id;
+              productDiv.innerHTML = `
+                  <h2>${product.title}</h2>
+                  <p>${product.description}</p>
+                  <p><strong>Price:</strong> $${product.price}</p>
+                  <p><strong>Stock:</strong> ${product.stock}</p>
+                  <p><strong>Code:</strong> ${product.code}</p>
+                  <p><strong>Category:</strong> ${product.category}</p>
+              `;
+              productsList.appendChild(productDiv);
+          });
+      };
+
+      socket.on('prod-logs', (products) => {
+          renderProducts(products);
+      });
+
+      socket.on('new-prod', (product) => {
+          const productsList = document.getElementById('products-list');
+          const productDiv = document.createElement('div');
+          productDiv.classList.add('product');
+          productDiv.dataset.id = product.id;
+          productDiv.innerHTML = `
+              <h2>${product.title}</h2>
+              <p>${product.description}</p>
+              <p><strong>Price:</strong> $${product.price}</p>
+              <p><strong>Stock:</strong> ${product.stock}</p>
+              <p><strong>Code:</strong> ${product.code}</p>
+              <p><strong>Category:</strong> ${product.category}</p>
+          `;
+          productsList.appendChild(productDiv);
+      });
+
+      socket.on('update-prod', (updatedProduct) => {
+          const productDiv = document.querySelector(`.product[data-id='${updatedProduct.id}']`);
+          if (productDiv) {
+              productDiv.innerHTML = `
+                  <h2>${updatedProduct.title}</h2>
+                  <p>${updatedProduct.description}</p>
+                  <p><strong>Price:</strong> $${updatedProduct.price}</p>
+                  <p><strong>Stock:</strong> ${updatedProduct.stock}</p>
+                  <p><strong>Code:</strong> ${updatedProduct.code}</p>
+                  <p><strong>Category:</strong> ${updatedProduct.category}</p>
+              `;
+          }
+      });
+
+      socket.on('borrar-prod', (productId) => {
+          const productDiv = document.querySelector(`.product[data-id='${productId}']`);
+          if (productDiv) {
+              productDiv.remove();
+          }
+      });
+  </script>
+</body>
+</html>
 
 
 

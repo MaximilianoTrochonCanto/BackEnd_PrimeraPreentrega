@@ -1,25 +1,25 @@
-const socket = io()
 
 
+import ProductManager from "../../dao/fileManagers/productManager"
 
-const listaMensajes = document.getElementById("listaMensajes")
-const user = document.getElementById("userTxt")
-const message = document.getElementById("messageTxt")
+const listaProductos = document.getElementById("listaProductos")
 
+const pManager = new ProductManager()
 
-document.getElementById("btnIngresarMensaje").addEventListener("click",function(){    
-    socket.emit("newMessage",{
-        user:user.value,
-        message:message.value
-    })
+const data = await pManager.getProducts()
+
+console.log("pocket check")
     
-    
-    socket.on("msg",(data) => {
-        listaMensajes.innerHTML = ""
-        data.forEach(m => listaMensajes.innerHTML += `${m.user} dijo: ${m.message} <br>`)
-        
-    })
-    
-})
-
-    
+    if(data.length>0)
+    data.forEach(p => {
+        listaProductos.innerHTML += `           
+        <h2>ID: ${p._id}</h2>                
+        <h2>Titulo: ${p.title}</h2>                
+        <h2>Precio: ${p.price}</h2>
+        <h2>Stock: ${p.stock}</h2>
+        <h2>Descripcion: ${p.description}</h2>
+        <h2>Categoria: ${p.category}</h2>
+        <h2>Codigo: ${p.code}</h2>
+        <hr>
+        `
+    }); 

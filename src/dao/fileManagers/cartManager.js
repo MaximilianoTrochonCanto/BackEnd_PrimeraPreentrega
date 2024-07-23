@@ -1,59 +1,88 @@
-const fs = require("fs/promises")
-const path = require("path");
-const ProductManager = require("./productManager")
+import fs from 'fs/promises';
+import path from 'path';
+import ProductManager from './productManager.js';
+const _dirname = path.resolve();
 
-const pManager = new ProductManager(path.join(__dirname, "./products.json"))
+class CartManager {
+  constructor() {
+    this.filePath = path.join(_dirname, 'fileManager', 'carts.json');
+    this.productManager = new ProductManager();
+  }
 
-class CartManager{
-    constructor(path){
-        this.pathDB = path;
+  async addProduct(cid, pid) {
+    try {
+      const cart = await this.getCart(cid);
+      const product = await this.productManager.getProductById(pid);
+
+      if (!product.status) {
+        throw new Error('El producto no tiene stock');
+      }
+
+      const existingProduct = cart.products.find(p => p.product === pid);
+      if (existingProduct) {
+        existingProduct.quantity++;
+      } else {
+        cart.products.push({ product: pid, quantity: 1 });
+      }
+
+      await this.updateCart(cart);
+
+      return `Producto con ID ${pid} agregado al carrito con ID ${cid}`;
+    } catch (error) {
+      throw new Error(error);
     }
+  }
 
+  async getCart(cid) {
+    try {
+      const carts = await this.readCartsFromFile();
+      const cart = carts.find(c => c.id === cid);
 
-    async addProduct(cid,product){
-        try{        
-        const allProducts = await this.getProducts(cid); 
-        
+      if (!cart) {
+        throw new Error(`El carrito con ID ${cid} no fue encontrado`);
+      }
 
-        const prod = await pManager.getProductById(product)
-        
-            if (prod.status) {                                        
-            
-            (allProducts.products.some(p => parseInt(p.product,10) === Number(product)))?(allProducts.products.find(p => p.product === product)).quantity+=1:
-            
-            
-            allProducts.products.push(new Object({
-                product:product,
-                quantity:1
-        }))
-        const arrayNuevo = {"carts":[]}
-        const copia = await fs.readFile(this.pathDB)
-        const carritos = JSON.parse(copia)
-        
-        for(let i = 0;i<carritos.carts.length;i++){
-            arrayNuevo.carts.push((parseInt(carritos.carts[i].id,10) === Number(cid))?allProducts:carritos.carts[i])
-        }
-        
-        await fs.writeFile(this.pathDB,JSON.stringify(arrayNuevo))        
-        }else{ 
-            throw new Error("El producto no tiene stock")
-        }
-    }catch(error){
-        throw new Error(error)
-    }     
+      return cart;
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  async readCartsFromFile() {
+    try {
+      const data = await fs.readFile(this.filePath, 'utf-8');
+      return JSON.parse(data).carts;
+    } catch (error) {
+      console.error('Error reading file:', error);
+      throw error;
+    }
+  }
+
+  async updateCart(cart) {
+    try {
+      const carts = await this.readCartsFromFile();
+      const index = carts.findIndex(c => c.id === cart.id);
+
+      if (index !== -1) {
+        carts[index] = cart;
+        await this.writeCartsToFile(carts);
+      } else {
+        throw new Error(`El carrito con ID ${cart.id} no fue encontrado`);
+      }
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      throw error;
+    }
+  }
+
+  async writeCartsToFile(carts) {
+    try {
+      await fs.writeFile(this.filePath, JSON.stringify({ carts }, null, 2), 'utf-8');
+    } catch (error) {
+      console.error('Error writing file:', error);
+      throw error;
+    }
+  }
 }
 
-    async getProducts(cid){
-        
-            const cartsFileRead = await fs.readFile(this.pathDB);
-            const allCarts = JSON.parse(cartsFileRead)                       
-            const retorno = allCarts.carts.find((c) => parseInt(c.id,10) === Number(cid))
-            if(retorno === undefined)throw new Error("No existe el carrito")
-            return retorno
-        
-    }
-
-    
-}   
-
-module.exports = CartManager;
+export default CartManager;
