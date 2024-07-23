@@ -41,8 +41,6 @@ router.post('/:cid/product/:pid', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
-  // Implement your POST logic here as needed, using cartManager methods
-});
+
 
 export default router;

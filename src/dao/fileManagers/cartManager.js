@@ -5,7 +5,7 @@ const _dirname = path.resolve();
 
 class CartManager {
   constructor() {
-    this.filePath = path.join(_dirname, 'fileManager', 'carts.json');
+    this.filePath = path.join(_dirname, "src","dao",'fileManagers', 'carts.json');
     this.productManager = new ProductManager();
   }
 
