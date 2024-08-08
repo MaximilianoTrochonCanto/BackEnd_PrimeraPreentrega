@@ -5,7 +5,7 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, sort = 'asc' } = req.query;
     const parsedPage = parseInt(page);
     const parsedLimit = parseInt(limit);
 
@@ -20,13 +20,18 @@ router.get('/', async (req, res) => {
     const totalPages = Math.ceil(totalDocuments / parsedLimit);
     const skip = (parsedPage - 1) * parsedLimit;
 
-    const products = await productsModel.find().skip(skip).limit(parsedLimit);
+
+    const sortOrder = sort === 'desc' ? -1 : 1;
+    const products = await productsModel.find()
+      .sort({ price: sortOrder })
+      .skip(skip)
+      .limit(parsedLimit);
 
     const hasPrevPage = parsedPage > 1;
     const hasNextPage = parsedPage < totalPages;
 
-    const prevLink = hasPrevPage ? `/products?page=${parsedPage - 1}&limit=${parsedLimit}` : null;
-    const nextLink = hasNextPage ? `/products?page=${parsedPage + 1}&limit=${parsedLimit}` : null;
+    const prevLink = hasPrevPage ? `/products?page=${parsedPage - 1}&limit=${parsedLimit}&sort=${sort}` : null;
+    const nextLink = hasNextPage ? `/products?page=${parsedPage + 1}&limit=${parsedLimit}&sort=${sort}` : null;
 
     res.status(200).json({
       status: 'success',
