@@ -1,27 +1,58 @@
 import { Router } from 'express';
 import { uploader } from '../utils.js';
-import ProductManager from '../dao/fileManagers/productManager.js';
-
+import productsModel from '../dao/model/products.models.js';
 const router = Router();
-const productManager = new ProductManager();
 
 router.get('/', async (req, res) => {
   try {
-    const products = await productManager.getProducts();
-    let limit = parseInt(req.query.limit);
-    if (isNaN(limit) || limit <= 0) {
-      limit = products.length;
+    const { page = 1, limit = 10 } = req.query;
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+
+    if (isNaN(parsedPage) || parsedPage <= 0 || isNaN(parsedLimit) || parsedLimit <= 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Page and limit must be positive integers'
+      });
     }
-    res.status(200).json(products.slice(0, limit));
+
+    const totalDocuments = await productsModel.countDocuments();
+    const totalPages = Math.ceil(totalDocuments / parsedLimit);
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const products = await productsModel.find().skip(skip).limit(parsedLimit);
+
+    const hasPrevPage = parsedPage > 1;
+    const hasNextPage = parsedPage < totalPages;
+
+    const prevLink = hasPrevPage ? `/products?page=${parsedPage - 1}&limit=${parsedLimit}` : null;
+    const nextLink = hasNextPage ? `/products?page=${parsedPage + 1}&limit=${parsedLimit}` : null;
+
+    res.status(200).json({
+      status: 'success',
+      payload: products,
+      totalPages,
+      prevPage: hasPrevPage ? parsedPage - 1 : null,
+      nextPage: hasNextPage ? parsedPage + 1 : null,
+      page: parsedPage,
+      hasPrevPage,
+      hasNextPage,
+      prevLink,
+      nextLink
+    });
   } catch (error) {
     console.error('Error reading products:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
   }
 });
 
+
 router.get('/:pId', async (req, res) => {
   try {
-    const product = await productManager.getProductById(req.params.pId);
+    const product = await productsModel.findById(req.params.pId);
     if (!product) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
@@ -48,15 +79,13 @@ router.post('/', uploader.single('thumbnail'), async (req, res) => {
       });
     }
 
-    const newProduct = { title, description, price: parsedPrice, thumbnail, stock: parsedStock, code, category };
-    console.log(newProduct);
-    await productManager.createProduct(newProduct);
+    const newProduct = new productsModel({ title, description, price: parsedPrice, thumbnail, stock: parsedStock, status: true,code, category });
+    await newProduct.save();
 
-    // Emit to WebSocket clients
     req.io.emit('new-prod', newProduct);
 
     res.status(201).json({
-      ...newProduct,
+      ...newProduct.toObject(),
       message: 'Producto agregado',
     });
 
@@ -71,13 +100,12 @@ router.put('/:pId', async (req, res) => {
     const { title, description, price, thumbnail, stock, code, category } = req.body;
     const productId = req.params.pId;
 
-    const existingProduct = await productManager.getProductById(productId);
+    const existingProduct = await productsModel.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
     const updatedProduct = {
-      id: productId,
       title,
       description,
       price,
@@ -87,9 +115,9 @@ router.put('/:pId', async (req, res) => {
       category,
     };
 
-    await productManager.updateProduct(productId, updatedProduct);
+    await productsModel.findByIdAndUpdate(productId, updatedProduct, { new: true });
 
-    // Emit to WebSocket clients
+
     req.io.emit('update-prod', updatedProduct);
 
     res.status(200).json({
@@ -107,19 +135,18 @@ router.delete('/:pId', async (req, res) => {
   try {
     const productId = req.params.pId;
 
-    const existingProduct = await productManager.getProductById(productId);
+    const existingProduct = await productsModel.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
-    const deletedProduct = await productManager.deleteProduct(productId);
+    await productsModel.findByIdAndDelete(productId);
 
-    // Emit to WebSocket clients
     req.io.emit('borrar-prod', productId);
 
     res.status(200).json({
       message: 'Producto borrado.',
-      deletedProduct,
+      deletedProduct: existingProduct,
     });
 
   } catch (error) {
@@ -129,3 +156,4 @@ router.delete('/:pId', async (req, res) => {
 });
 
 export default router;
+

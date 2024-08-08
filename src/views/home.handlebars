@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product List</title>
+  <title>Lista de productos</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -43,9 +44,33 @@
       font-size: 1em;
       color: #28a745;
     }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .page-link {
+      margin: 0 5px;
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .page-link:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
+  <h2>Carritos:</h2>
+  <select name="cartId" id="cart-select">
+    {{#each carts}}
+      <option value="{{number}}" data-cart-id="{{_id}}">Carrito {{number}}</option>
+    {{/each}}
+  </select>
+  <hr>
+  
   <h1>Lista de productos</h1>
   <div class="product-list">
     {{#each products}}
@@ -53,8 +78,41 @@
       <p class="product-title">{{title}}</p>
       <p class="product-description">{{description}}</p>
       <p class="product-price">${{price}}</p>
+      <div>
+        <a href="/api/products/{{_id}}" class="btn-view-details">Ver detalles</a>
+        <form action="/api/carts/{{_id}}/product/{{_id}}" method="POST" class="add-to-cart-form">
+          <input type="hidden" name="cartNumber" class="cartNumber">
+          <button type="submit" class="btn-add-to-cart">Agregar al carrito</button>
+        </form>
+      </div>
     </div>
     {{/each}}
   </div>
+  
+  <div class="pagination">
+    {{#if hasPrevPage}}
+      <a href="?page={{prevPage}}" class="page-link">Anterior</a>
+    {{/if}}
+    {{#if hasNextPage}}
+      <a href="?page={{nextPage}}" class="page-link">Siguiente</a>
+    {{/if}}
+  </div>
+
+  <script>
+    document.getElementById('cart-select').addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const cartNumber = selectedOption.value;
+      const cartId = selectedOption.getAttribute('data-cart-id');
+
+      const forms = document.querySelectorAll('.add-to-cart-form');
+      forms.forEach(form => {
+        form.querySelector('.cartNumber').value = cartNumber;
+        const productId = form.getAttribute('action').split('/').pop();
+        form.setAttribute('action', `/api/carts/${cartId}/product/${productId}`);
+      });
+    });
+
+    document.getElementById('cart-select').dispatchEvent(new Event('change'));
+  </script>
 </body>
 </html>

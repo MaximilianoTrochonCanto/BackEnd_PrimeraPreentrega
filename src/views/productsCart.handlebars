@@ -1,11 +1,95 @@
-<h1>Lista de productos del carrito {{cart.number}}</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Productos del Carrito</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .cart-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .cart-header {
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .product-item:last-child {
+      border-bottom: none;
+    }
+    .product-details {
+      flex: 1;
+    }
+    .product-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #333;
+    }
+    .product-description {
+      color: #555;
+      margin: 5px 0;
+    }
+    .product-price {
+      font-size: 1.1em;
+      color: #28a745;
+    }
+    .product-quantity {
+      font-size: 1em;
+      color: #555;
+    }
+    .remove-btn {
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .remove-btn:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <div class="cart-container">
+    <div class="cart-header">
+      <h1>Lista de productos del carrito {{cart.number}}</h1>
+    </div>
 
-
-
-{{#each products}} 
-
-<pre>{{this}}</pre>
-
-
-<hr>
-{{/each}} 
+    {{#each cart.products}}
+    <div class="product-item">
+      <div class="product-details">
+        <p class="product-title">{{this.product.title}}</p>
+        <p class="product-description">{{this.product.description}}</p>
+        <p class="product-price">${{this.product.price}}</p>
+        <p class="product-quantity">Cantidad: {{this.quantity}}</p>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</body>
+</html>
