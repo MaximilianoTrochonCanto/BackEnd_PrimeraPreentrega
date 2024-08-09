@@ -61,30 +61,60 @@ app.use(`/${API_PREFIX}/products`, (req, res, next) => {
 app.use(`/${API_PREFIX}/carts`, cartsRoutes);
 app.use(`/`, viewsRoutes);
 
+
+
 io.on('connection', async (socket) => {
-  console.log('New client connected', socket.id);
-
-  //file manager -> const products = await pManager.getProducts();
-  const products = await productsModel.find();
-  socket.emit('prod-logs', products);
-
-  socket.on('new-prod', async (data) => {
-    await productsModel.insertMany(data);
-    io.emit('prod-logs', await productsModel.find());
+    console.log('New client connected', socket.id);
+  
+    // Send the initial list of products to the new client
+    const products = await productsModel.find();
+    socket.emit('prod-logs', products);
+  
+    // Handle new product addition
+    socket.on('new-prod', async (data) => {
+      try {
+        console.log('Received new-prod data:', data);
+        await productsModel.insertMany(data);
+        io.emit('prod-logs', await productsModel.find());
+      } catch (error) {
+        console.error('Error handling new-prod event:', error);
+      }
+    });
+  
+    // Handle product deletion
+    socket.on('borrar-prod', async (productId) => {
+      try {
+        console.log('Received borrar-prod data:', productId);
+        const deletedProduct = await productsModel.findByIdAndDelete(productId);
+        if (deletedProduct) {
+          io.emit('prod-logs', await productsModel.find());
+        } else {
+          console.error('Product not found for deletion');
+        }
+      } catch (error) {
+        console.error('Error handling borrar-prod event:', error);
+      }
+    });
+  
+    // Handle product update
+    socket.on('update-prod', async (updatedProduct) => {
+      try {
+        console.log('Received update-prod data:', updatedProduct);
+        const result = await productsModel.findByIdAndUpdate(updatedProduct._id, updatedProduct, { new: true });
+        if (result) {
+          io.emit('prod-logs', await productsModel.find());
+        } else {
+          console.error('Product not found for update');
+        }
+      } catch (error) {
+        console.error('Error handling update-prod event:', error);
+      }
+    });
   });
+  
 
-  socket.on('borrar-prod', async (data) => {
-    await productsModel.deleteOne({ _id: data });
-    io.emit('prod-logs', await productsModel.find());
-  });
 
-  socket.on('update-prod', async (data) => {
-    await productsModel.findByIdAndUpdate(data.id, data, { new: true });
-    io.emit('prod-logs', await productsModel.find());
-  });
-});
-
-app.get('/real-time-products', async (req, res) => {
+app.get('/realtimeproducts', async (req, res) => {
   const products = await productsModel.find();
   res.render('realTimeProducts', { products });
 });

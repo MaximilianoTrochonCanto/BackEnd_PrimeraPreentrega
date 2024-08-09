@@ -100,6 +100,7 @@ router.post('/', uploader.single('thumbnail'), async (req, res) => {
   }
 });
 
+
 router.put('/:pId', async (req, res) => {
   try {
     const { title, description, price, thumbnail, stock, code, category } = req.body;
@@ -120,14 +121,13 @@ router.put('/:pId', async (req, res) => {
       category,
     };
 
-    await productsModel.findByIdAndUpdate(productId, updatedProduct, { new: true });
+    const result = await productsModel.findByIdAndUpdate(productId, updatedProduct, { new: true });
 
-
-    req.io.emit('update-prod', updatedProduct);
+    req.io.emit('update-prod', result);
 
     res.status(200).json({
       message: 'Producto actualizado correctamente.',
-      product: updatedProduct,
+      product: result,
     });
 
   } catch (error) {
@@ -159,6 +159,9 @@ router.delete('/:pId', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+
+
 
 export default router;
 

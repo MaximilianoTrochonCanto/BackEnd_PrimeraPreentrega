@@ -23,7 +23,7 @@
   <h1>Real-Time Products List</h1>
   <div id="products-list">
       {{#each products}}
-      <div class="product" data-id="{{id}}">
+      <div class="product" data-id="{{_id}}">
           <h2>{{title}}</h2>
           <p>{{description}}</p>
           <p><strong>Price:</strong> ${{price}}</p>
@@ -44,7 +44,7 @@
           products.forEach(product => {
               const productDiv = document.createElement('div');
               productDiv.classList.add('product');
-              productDiv.dataset.id = product.id;
+              productDiv.dataset.id = product._id;
               productDiv.innerHTML = `
                   <h2>${product.title}</h2>
                   <p>${product.description}</p>
@@ -65,7 +65,7 @@
           const productsList = document.getElementById('products-list');
           const productDiv = document.createElement('div');
           productDiv.classList.add('product');
-          productDiv.dataset.id = product.id;
+          productDiv.dataset.id = product._id;
           productDiv.innerHTML = `
               <h2>${product.title}</h2>
               <p>${product.description}</p>
@@ -77,8 +77,19 @@
           productsList.appendChild(productDiv);
       });
 
+      // Handle product deletion
+      socket.on('borrar-prod', (productId) => {
+          const productsList = document.getElementById('products-list');
+          const productDiv = productsList.querySelector(`.product[data-id='${productId}']`);
+          if (productDiv) {
+              productsList.removeChild(productDiv);
+          }
+      });
+
+      // Handle product update
       socket.on('update-prod', (updatedProduct) => {
-          const productDiv = document.querySelector(`.product[data-id='${updatedProduct.id}']`);
+          const productsList = document.getElementById('products-list');
+          const productDiv = productsList.querySelector(`.product[data-id='${updatedProduct._id}']`);
           if (productDiv) {
               productDiv.innerHTML = `
                   <h2>${updatedProduct.title}</h2>
@@ -90,16 +101,6 @@
               `;
           }
       });
-
-      socket.on('borrar-prod', (productId) => {
-          const productDiv = document.querySelector(`.product[data-id='${productId}']`);
-          if (productDiv) {
-              productDiv.remove();
-          }
-      });
   </script>
 </body>
 </html>
-
-
-
