@@ -1,8 +1,9 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import User from '../dao/model/users.models';
-import { hashPassword } from '../utils/encrypt';
+import User from '../dao/model/users.models.js';
+import { hashPassword } from '../utils/encrypt.js';
+import passport from 'passport';
 
 const router = express.Router();
 
