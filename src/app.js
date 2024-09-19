@@ -10,6 +10,8 @@ import ProductManager from './dao/fileManagers/productManager.js';
 import mongoose from 'mongoose'; 
 import productsModel from './dao/model/products.models.js';
 import handlebars from 'handlebars';
+import cookieParser from 'cookie-parser';
+import userRoutes from './routes/session.routes.js'
 
 const __dirname = path.resolve();
 const app = express();
@@ -40,6 +42,7 @@ const connection = mongoose
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
+app.use(cookieParser());
 
 // Handlebars engine setup
 app.engine('handlebars', engine({
@@ -59,7 +62,11 @@ app.use(`/${API_PREFIX}/products`, (req, res, next) => {
   next();
 }, productsRoutes);
 app.use(`/${API_PREFIX}/carts`, cartsRoutes);
+app.use(`/${API_PREFIX}/sessions`, userRoutes);
+
+
 app.use(`/`, viewsRoutes);
+
 
 
 
