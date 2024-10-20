@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { uploader } from '../utils.js';
 import productsModel from '../dao/model/products.models.js';
+import ProductRepository from "../repositories/product.repository.js";
+import { adminOnly, userOnly,authenticateJWT } from "../middleware/auth.middleware.js";
 const router = Router();
 
 router.get('/', async (req, res) => {
@@ -12,7 +14,7 @@ router.get('/', async (req, res) => {
     if (isNaN(parsedPage) || parsedPage <= 0 || isNaN(parsedLimit) || parsedLimit <= 0) {
       return res.status(400).json({
         status: 'error',
-        message: 'Page and limit must be positive integers'
+        message: 'Pagina y limite deben ser positivos'
       });
     }
 
@@ -46,7 +48,7 @@ router.get('/', async (req, res) => {
       nextLink
     });
   } catch (error) {
-    console.error('Error reading products:', error);
+    console.error('Error leyendo productos:', error);
     res.status(500).json({
       status: 'error',
       message: 'Internal server error'
@@ -54,21 +56,16 @@ router.get('/', async (req, res) => {
   }
 });
 
-
-router.get('/:pId', async (req, res) => {
+router.get("/:pid", async (req, res) => {
   try {
-    const product = await productsModel.findById(req.params.pId);
-    if (!product) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
+    const product = await ProductRepository.getProductById(req.params.pid);
     res.json(product);
   } catch (error) {
-    console.error('Error fetching product:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(404).json({ message: error.message });
   }
 });
 
-router.post('/', uploader.single('thumbnail'), async (req, res) => {
+router.post('/',authenticateJWT,adminOnly, uploader.single('thumbnail'), async (req, res) => {
   try {
     const { title, description, price, thumbnail, stock, code, category } = req.body;
     if (!title || !description || !price || !stock || !code) {
@@ -85,7 +82,7 @@ router.post('/', uploader.single('thumbnail'), async (req, res) => {
     }
 
     const newProduct = new productsModel({ title, description, price: parsedPrice, thumbnail, stock: parsedStock, status: true,code, category });
-    await newProduct.save();
+    await ProductRepository.createProduct(newProduct);
 
     req.io.emit('new-prod', newProduct);
 
@@ -95,13 +92,13 @@ router.post('/', uploader.single('thumbnail'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating product:', error);
+    console.error('Error al crear producto:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 
-router.put('/:pId', async (req, res) => {
+router.put('/:pId',authenticateJWT,adminOnly, async (req, res) => {
   try {
     const { title, description, price, thumbnail, stock, code, category } = req.body;
     const productId = req.params.pId;
@@ -131,12 +128,12 @@ router.put('/:pId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error('Error al actualizar informacion:', error);
     res.status(400).json({ message: error.message });
   }
 });
 
-router.delete('/:pId', async (req, res) => {
+router.delete('/:pId',authenticateJWT,adminOnly, async (req, res) => {
   try {
     const productId = req.params.pId;
 
@@ -155,11 +152,10 @@ router.delete('/:pId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error('Error al borrar producto:', error);
     res.status(400).json({ message: error.message });
   }
 });
-
 
 
 

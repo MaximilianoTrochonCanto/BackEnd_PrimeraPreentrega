@@ -34,7 +34,7 @@ router.get("/carts/:cid", async (req, res) => {
       console.log(cart.products); 
       res.render("productsCart", { cart });
     } catch (error) {
-      console.error('Error retrieving cart products:', error);
+      console.error('Error al extraer productos del carrito:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
@@ -45,7 +45,7 @@ router.get('/products', async (req, res) => {
         const products = await productsModel.find();
         res.render('products', { products });
     } catch (error) {
-        console.error('Error retrieving products:', error);
+        console.error('Error al extraer productos:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
