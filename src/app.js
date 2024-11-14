@@ -1,4 +1,5 @@
 import express from 'express';
+import mocksRouter from './routes/mocks.routes.js';
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { engine } from 'express-handlebars';
@@ -47,6 +48,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 app.use(cookieParser());
+app.use('/api/mocks', mocksRouter);
+
+
 
 // Handlebars engine setup
 app.engine('handlebars', engine({
