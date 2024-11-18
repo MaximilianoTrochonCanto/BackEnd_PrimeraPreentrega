@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import generateMockUsers from '../utils/mockUsers.js';
-import UserModel from '../dao/model/users.models.js'; // Ajustar el modelo según tu estructura
-import PetModel from '../dao/model/pets.models.js'; // Ajustar el modelo según tu estructura
 import generateMockPets from '../utils/mockPets.js';
+import UserModel from '../dao/model/users.models.js'; 
+import PetModel from '../dao/model/pets.models.js'; 
+
 const router = Router();
 
 // Endpoint GET /mockingpets
@@ -20,21 +21,17 @@ router.get('/mockingusers', (req, res) => {
 // Endpoint POST /generateData
 router.post('/generateData', async (req, res) => {
     try {
-        const { users = 0, pets = 0 } = req.body;
+        const { users,pets } = req.body;
 
         // Generar usuarios mock
         const mockUsers = generateMockUsers(users);
         await UserModel.insertMany(mockUsers);
 
         // Generar pets mock
-        const mockPets = Array.from({ length: pets }, (_, i) => ({
-            _id: `mock-pet-id-${i}`,
-            name: `Pet${i}`,
-            species: 'Unknown',
-        }));
+        const mockPets = generateMockPets(pets)
         await PetModel.insertMany(mockPets);
 
-        res.status(201).json({ message: 'Data generated successfully', users: users, pets: pets });
+        res.status(201).json({ message: 'Data generated successfully', users, pets });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
