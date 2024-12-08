@@ -14,7 +14,11 @@ import handlebars from 'handlebars';
 import cookieParser from 'cookie-parser';
 import userRoutes from './routes/session.routes.js'
 import dotenv from 'dotenv';
+import cluster from 'node:cluster'
+import {cpus} from 'node:os'
 dotenv.config();
+
+const nucleos = cpus().length
 
 // Cargar el archivo .env
 
@@ -31,7 +35,17 @@ const httpServer = createServer(app);
 const io = new SocketServer(httpServer);
 const API_PREFIX = 'api';
 
-httpServer.listen(PORT, () => console.log(`Up N'running on port ${PORT}`));
+if(cluster.isPrimary){
+  console.log("Main process ID:",process.pid)
+  console.log("Main process, forking.")
+  for(let i = 0;i<nucleos;i++){
+    cluster.fork()
+  }
+}else{
+  httpServer.listen(PORT, () => console.log(`Up N'running on port ${PORT}`)); 
+  console.log(process.pid)
+}
+
 
 // Conexión a MongoDB usando la variable MONGO_URI del archivo .env
 const connection = mongoose
