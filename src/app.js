@@ -16,6 +16,9 @@ import userRoutes from './routes/session.routes.js'
 import dotenv from 'dotenv';
 import cluster from 'node:cluster'
 import {cpus} from 'node:os'
+import swaggerJSDoc from 'swagger-jsdoc';
+import swaggerUI from 'swagger-ui-express'
+
 dotenv.config();
 
 const nucleos = cpus().length
@@ -35,16 +38,19 @@ const httpServer = createServer(app);
 const io = new SocketServer(httpServer);
 const API_PREFIX = 'api';
 
-if(cluster.isPrimary){
-  console.log("Main process ID:",process.pid)
-  console.log("Main process, forking.")
-  for(let i = 0;i<nucleos;i++){
-    cluster.fork()
-  }
-}else{
-  httpServer.listen(PORT, () => console.log(`Up N'running on port ${PORT}`)); 
-  console.log(process.pid)
-}
+
+
+// if(cluster.isPrimary){
+//   console.log("Main process ID:",process.pid)
+//   console.log("Main process, forking.")
+//   for(let i = 0;i<nucleos;i++){
+//     cluster.fork()
+//   }
+// }else{
+  
+   httpServer.listen(PORT, () => console.log(`Up N'running on port ${PORT}`)); 
+//   console.log(process.pid)
+// }
 
 
 // Conexión a MongoDB usando la variable MONGO_URI del archivo .env
@@ -56,6 +62,9 @@ const connection = mongoose
   .catch((err) => {
     console.log(err);
   });
+
+ 
+  
 
 // Middleware
 app.use(express.json());
@@ -85,6 +94,38 @@ app.use(`/${API_PREFIX}/products`, (req, res, next) => {
 }, productsRoutes);
 app.use(`/${API_PREFIX}/carts`, cartsRoutes);
 app.use(`/auth`, userRoutes);
+
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Ecommerce Api',
+      version: '1.0.0',
+      description: 'Documenting every route from proyect',
+    },
+    servers: [{ url: 'http://localhost:8080' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  },
+  apis: ['./src/routes/session.routes.js','./src/routes/cartsRoutes.js','./src/routes/productsRoutes.js'], 
+};
+
+
+const specs = swaggerJSDoc(swaggerOptions);
+
+app.use('/apidocs', swaggerUI.serve, swaggerUI.setup(specs));
+
+if (!cluster.isPrimary) {
+  app.use('/apidocs', swaggerUI.serve, swaggerUI.setup(specs));
+}
 
 app.use(`/`, viewsRoutes);
 
@@ -142,6 +183,6 @@ app.get('/realtimeproducts', async (req, res) => {
   res.render('realTimeProducts', { products });
 });
 
-export default io;
+export default httpServer;
 
 

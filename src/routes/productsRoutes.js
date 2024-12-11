@@ -157,6 +157,211 @@ router.delete('/:pId',authenticateJWT,adminOnly, async (req, res) => {
   }
 });
 
+// Get all products
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Retrieve all products with pagination and sorting
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *     responses:
+ *       200:
+ *         description: A list of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 payload:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 5
+ *                 prevPage:
+ *                   type: integer
+ *                   example: 1
+ *                 nextPage:
+ *                   type: integer
+ *                   example: 3
+ *       400:
+ *         description: Invalid pagination or sorting parameters
+ *       500:
+ *         description: Internal server error
+ */
+
+// Get a product by ID
+/**
+ * @swagger
+ * /products/{pid}:
+ *   get:
+ *     summary: Retrieve a product by its ID
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: path
+ *         name: pid
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A product
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Internal server error
+ */
+
+// Create a new product
+/**
+ * @swagger
+ * /products:
+ *   post:
+ *     summary: Add a new product
+ *     tags:
+ *       - Products
+ *     security:
+ *       - JWT: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *                 format: float
+ *               thumbnail:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ *               code:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Product added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Missing required fields or invalid data
+ *       500:
+ *         description: Internal server error
+ */
+
+// Update an existing product
+/**
+ * @swagger
+ * /products/{pId}:
+ *   put:
+ *     summary: Update an existing product
+ *     tags:
+ *       - Products
+ *     security:
+ *       - JWT: []
+ *     parameters:
+ *       - in: path
+ *         name: pId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *                 format: float
+ *               thumbnail:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ *               code:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Invalid data or product not found
+ *       500:
+ *         description: Internal server error
+ */
+
+// Delete a product
+/**
+ * @swagger
+ * /products/{pId}:
+ *   delete:
+ *     summary: Delete a product by ID
+ *     tags:
+ *       - Products
+ *     security:
+ *       - JWT: []
+ *     parameters:
+ *       - in: path
+ *         name: pId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Internal server error
+ */
 
 
 export default router;

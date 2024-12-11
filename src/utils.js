@@ -2,13 +2,11 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import multer from "multer";
 
-const _filename = fileURLToPath(import.meta.url)
-
-export const _dirname = dirname(_filename)
+// const _filename = fileURLToPath(import.meta.url)
 
 const storage = multer.diskStorage({
     destination:(req,file,callback) => {
-        callback(null,_dirname + '/public/img')
+        callback(null,__dirname + '/public/img')
     },
     filename:(req,file,cb) => {
         cb(null,file.filename)

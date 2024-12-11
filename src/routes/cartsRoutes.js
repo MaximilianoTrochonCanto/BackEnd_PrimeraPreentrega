@@ -380,5 +380,240 @@ router.delete('/:cid', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /cart/{cartId}/product/{productId}:
+ *   post:
+ *     summary: Add a product to a cart
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cartId
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart
+ *         schema:
+ *           type: string
+ *       - name: productId
+ *         in: path
+ *         required: true
+ *         description: The ID of the product to add to the cart
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               cartNumber:
+ *                 type: integer
+ *                 description: The cart number
+ *     responses:
+ *       200:
+ *         description: Product added to cart
+ *       404:
+ *         description: Cart or Product not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart/{cid}/purchase:
+ *   post:
+ *     summary: Purchase items in a cart
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cid
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Purchase completed successfully
+ *       404:
+ *         description: Cart not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart:
+ *   get:
+ *     summary: Get all carts
+ *     tags:
+ *       - Cart
+ *     responses:
+ *       200:
+ *         description: List of all carts
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart/{cid}:
+ *   get:
+ *     summary: Get details of a specific cart
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cid
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cart details
+ *       404:
+ *         description: Cart not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart/{cid}/products/{pid}:
+ *   delete:
+ *     summary: Remove a product from a cart
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cid
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart
+ *         schema:
+ *           type: string
+ *       - name: pid
+ *         in: path
+ *         required: true
+ *         description: The ID of the product to remove from the cart
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product removed from cart
+ *       404:
+ *         description: Product not found in cart or Cart not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart/{cid}:
+ *   put:
+ *     summary: Update a cart's product list
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cid
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart to update
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               products:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     product:
+ *                       type: string
+ *                       description: Product ID
+ *                     quantity:
+ *                       type: integer
+ *                       description: Product quantity
+ *     responses:
+ *       200:
+ *         description: Cart updated successfully
+ *       400:
+ *         description: Invalid data
+ *       404:
+ *         description: Cart not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart/{cid}/products/{pid}:
+ *   put:
+ *     summary: Update quantity of a product in a cart
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cid
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart
+ *         schema:
+ *           type: string
+ *       - name: pid
+ *         in: path
+ *         required: true
+ *         description: The ID of the product in the cart
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *                 description: New quantity for the product
+ *     responses:
+ *       200:
+ *         description: Product quantity updated
+ *       400:
+ *         description: Invalid quantity
+ *       404:
+ *         description: Product not found in cart or Cart not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /cart/{cid}:
+ *   delete:
+ *     summary: Empty the cart (remove all products)
+ *     tags:
+ *       - Cart
+ *     parameters:
+ *       - name: cid
+ *         in: path
+ *         required: true
+ *         description: The ID of the cart to empty
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: All products removed from the cart
+ *       404:
+ *         description: Cart not found
+ *       500:
+ *         description: Internal server error
+ */
+
 
 export default router;
